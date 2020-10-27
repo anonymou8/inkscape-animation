@@ -2,9 +2,11 @@
 
 Works with Inkscale v.1.0.
 
-<div style="text-align:center;"><img src="https://raw.githubusercontent.com/anonymou8/inkscape-animation/main/screenshot.png" /><br/><i>Dialog screenshot.</i></div>
+<img src="https://raw.githubusercontent.com/anonymou8/inkscape-animation/main/screenshot.png" />
 
 Each layer in a document represents a single frame. Bottom layer is the first frame.
+
+If bottom layer is named `bg` then it will be set as background for every frame.
 
 The extension is of Export type. To use it go to `File→Save As...` or `File→Save a Copy...`
 and select `Layers as animation frames (ffmpeg) (*.mp4)` for the format.
@@ -24,7 +26,7 @@ Copy `layers2anim.inx` and `layers2anim.py` to Inkscape extesions directory and 
 
 ### Example animation 
 
-<div style="text-align:center;"><img src="https://raw.githubusercontent.com/anonymou8/inkscape-animation/main/swan.gif" /></div>
+<img src="https://raw.githubusercontent.com/anonymou8/inkscape-animation/main/swan.gif" />
 
 This GIF is the result of convertion PNG frames exported by the extension, using Ffmpeg commands like
 
