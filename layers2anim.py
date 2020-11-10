@@ -1,6 +1,6 @@
 import inkex
 from inkex.base import TempDirMixin
-from inkex.command import take_snapshot
+from inkex.command import take_snapshot as inkscape_snapshot, write_svg
 import os, subprocess as sp, shutil
 
 class AnimLayers(TempDirMixin, inkex.OutputExtension):
@@ -9,10 +9,12 @@ class AnimLayers(TempDirMixin, inkex.OutputExtension):
         pars.add_argument('--fps', type=int, default=12)
         pars.add_argument('--loops', type=int, default=1)
         pars.add_argument('--crf', type=int, default=22)
-        pars.add_argument('--rgb', type=inkex.Boolean, default=False)
+        pars.add_argument('--rgb', type=inkex.Boolean, default=True)
+        pars.add_argument('--rsvg', type=inkex.Boolean, default=True)
         pars.add_argument('--pngs', type=inkex.Boolean, default=False)
         pars.add_argument('--path', type=str, default='')
         pars.add_argument('--pngn', type=int, default=0)
+        pars.add_argument('--ffplay', type=inkex.Boolean, default=False)
 
     def save(self, stream):
         layers = self.svg.xpath("//svg:g[@inkscape:groupmode='layer']")
@@ -35,6 +37,18 @@ class AnimLayers(TempDirMixin, inkex.OutputExtension):
                     show_layer(parent, show=show)
                 else:
                     break
+                    
+        def rsvg_snapshot(document, dirname, name, dpi):
+            path = os.path.join(dirname, name)
+            width = round(self.svg.width * dpi / 96)
+            write_svg(document, path+'.svg')
+            args = f'rsvg-convert -w {width} -a -o {path}.png {path}.svg'
+            sp.run(args.split())
+
+        if self.options.rsvg:
+            snapshot = rsvg_snapshot
+        else:
+            snapshot = inkscape_snapshot
         
         # first, hide everything
         for layer in layers:
@@ -54,7 +68,7 @@ class AnimLayers(TempDirMixin, inkex.OutputExtension):
             
             show_parent_layers(layer)
             show_layer(layer)
-            filename = take_snapshot(self.document, dirname=self.tempdir, name=f'{i:04}', ext='png', dpi=self.options.resolution)
+            snapshot(self.document, dirname=self.tempdir, name=f'{i:04}', dpi=self.options.resolution)
             show_layer(layer, show=False)
             show_parent_layers(layer, show=False)
             
@@ -83,7 +97,9 @@ class AnimLayers(TempDirMixin, inkex.OutputExtension):
 
         if self.options.pngs and not self.options.path:
             inkex.errormsg("PNG frames were not saved. Please, choose a path.")
-
-
+            
+        if self.options.ffplay:
+            sp.run(f'ffplay -loglevel quiet -loop 0 {mp4}'.split())
+        
 if __name__ == '__main__':
     AnimLayers().run()
