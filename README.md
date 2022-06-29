@@ -1,6 +1,11 @@
 ### Inkscape extension to convert SVG document to MP4-animation.
 
-Works with Inkscale v.1.0.
+Works with Inkscale v.1.2*
+
+\* — *(There's an [issue](https://gitlab.com/inkscape/inkscape/-/issues/2473) on some OSes
+with missing `cssselect` Python module, on which Inkskape extensions subsystem depends. 
+Manual installation fixes the problem. It may be named `python3-cssselect` 
+or just `python-cssselect` in your distro repository.)*
 
 <img src="https://raw.githubusercontent.com/anonymou8/inkscape-animation/main/screenshot.png" />
 
