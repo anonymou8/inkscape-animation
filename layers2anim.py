@@ -37,69 +37,78 @@ class AnimLayers(TempDirMixin, inkex.OutputExtension):
                     show_layer(parent, show=show)
                 else:
                     break
-                    
-        def rsvg_snapshot(document, dirname, name, dpi):
+
+        def rsvg_snapshot(document, dirname, name, dpi, **kwargs):
             path = os.path.join(dirname, name)
-            width = round(self.svg.width * dpi / 96)
+            width = round(self.svg.viewport_width * dpi / 96)
+            bg = self.svg.namedview.get('pagecolor')
             write_svg(document, path+'.svg')
-            args = f'rsvg-convert -w {width} -a -o {path}.png {path}.svg'
+            args = f'rsvg-convert -w {width} -a -b {bg} -o {path}.png {path}.svg'
             sp.run(args.split())
 
         if self.options.rsvg:
             snapshot = rsvg_snapshot
         else:
             snapshot = inkscape_snapshot
-        
+
         # first, hide everything
         for layer in layers:
             show_layer(layer, show=False)
-        
+
         # if first layer is named 'bg' then show it forever
         if layers[0].get('inkscape:label') == 'bg':
             show_layer(layers[0])
             layers = layers[1:]
-        
+
         i = 0
         for layer in layers:
             # do not generate an image for layers that have sublayers
             children = layer.getchildren()
             if children and children[0].get('inkscape:groupmode') == 'layer':
                 continue
-            
+
             show_parent_layers(layer)
             show_layer(layer)
-            snapshot(self.document, dirname=self.tempdir, name=f'{i:04}', dpi=self.options.resolution)
+            snapshot(self.document, dirname=self.tempdir, name=f'{i:04}',
+                     dpi=self.options.resolution, export_background_opacity=255)
             show_layer(layer, show=False)
             show_parent_layers(layer, show=False)
-            
+
             # copy PNG file if the option enabled
             if self.options.pngs and self.options.path:
                 f = os.path.join(self.tempdir, f'{i:04}.png')
                 t = os.path.join(self.options.path, f'{i+self.options.pngn:04}.png')
                 shutil.copyfile(f, t)
-                
+
             i += 1
-        
+
         # convert to mp4
-        fps = self.options.fps
-        crf = self.options.crf
+        fps   = self.options.fps
+        crf   = self.options.crf
         codec = ['libx264', 'libx264rgb'][self.options.rgb]
-        pngs = os.path.join(self.tempdir, '%04d.png')
-        mp4 = os.path.join(self.tempdir, 'temp.mp4')
-        info = '-hide_banner -loglevel warning'
-        loops = f'-vf loop={self.options.loops-1}:{i}'
-        args = f'ffmpeg {info} -r {fps} -i {pngs} {loops} -c:v {codec} -crf {crf} {mp4}'
+        pngs  = os.path.join(self.tempdir, '%04d.png')
+        mp4   = os.path.join(self.tempdir, 'temp.mp4')
+        loglevel  = '-hide_banner -loglevel warning'
+        vf_loops  = f'loop={self.options.loops-1}:{i}'
+        args = f'''
+            ffmpeg
+                {loglevel}
+                -framerate {fps} -i {pngs}
+                -vf {vf_loops}
+                -c:v {codec} -crf {crf}
+               {mp4}
+        '''
         sp.run(args.split())
-        
+
         # save output
         with open(mp4, 'rb') as tmp4:
             shutil.copyfileobj(tmp4, stream)
 
         if self.options.pngs and not self.options.path:
             inkex.errormsg("PNG frames were not saved. Please, choose a path.")
-            
+
         if self.options.ffplay:
             sp.run(f'ffplay -loglevel quiet -loop 0 {mp4}'.split())
-        
+
 if __name__ == '__main__':
     AnimLayers().run()
