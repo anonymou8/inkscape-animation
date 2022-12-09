@@ -27,7 +27,8 @@ class AnimLayers(TempDirMixin, inkex.OutputExtension):
 
         if self.options.pngs:
             if not self.options.path:
-                inkex.errormsg("PNG frames were not saved. Please, choose a path.")
+                inkex.errormsg("PNG frames will not be saved. Please, choose a path.")
+                # TODO: export MP4 anyway
                 return
             if not os.path.exists(self.options.path):
                 os.mkdir(self.options.path)
