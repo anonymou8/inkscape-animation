@@ -1,15 +1,17 @@
 import inkex
 from inkex.base import TempDirMixin
 from inkex.command import take_snapshot as inkscape_snapshot, write_svg
-import os, subprocess as sp, shutil
+import os, subprocess as sp, shutil, sys
 
 class AnimLayers(TempDirMixin, inkex.OutputExtension):
     def add_arguments(self, pars):
         pars.add_argument('--resolution', type=int, default=96)
         pars.add_argument('--fps', type=int, default=12)
         pars.add_argument('--loops', type=int, default=1)
-        pars.add_argument('--crf', type=int, default=22)
-        pars.add_argument('--rgb', type=inkex.Boolean, default=True)
+        pars.add_argument('--crf',  type=int, default=22)
+        pars.add_argument('--opac', type=inkex.Boolean, default=True)
+        pars.add_argument('--firstlev', type=inkex.Boolean, default=False)
+        pars.add_argument('--rgb',  type=inkex.Boolean, default=True)
         pars.add_argument('--rsvg', type=inkex.Boolean, default=True)
         pars.add_argument('--pngs', type=inkex.Boolean, default=False)
         pars.add_argument('--path', type=str, default='')
@@ -23,17 +25,37 @@ class AnimLayers(TempDirMixin, inkex.OutputExtension):
             inkex.errormsg("No layers found.")
             return
 
+        if self.options.pngs:
+            if not self.options.path:
+                inkex.errormsg("PNG frames were not saved. Please, choose a path.")
+                return
+            if not os.path.exists(self.options.path):
+                os.mkdir(self.options.path)
+            elif not os.path.isdir(self.options.path):
+                inkex.errormsg(f'"{self.options.path}" is not a directory.')
+                return
+
+        exposed_layer_names = 'bg', 'background', 'fg', 'foreground', 'show', 'nohide'
+        hidden_layer_names = 'hide', 'hidden', 'scratch', 'temp', 'guides'
+
+        def label(layer):
+            layer_label = layer.get('inkscape:label')
+            return layer_label and layer_label.lower() or ''
+
         def show_layer(layer, show=True):
-            if show:
-                layer.style.update('display:inherit;opacity:1;')
+            if show or label(layer) in exposed_layer_names:
+                layer.style.update('display:inherit;' + 'opacity:1;' * self.options.opac)
             else:
                 layer.style.update('display:none;')
+
+        def is_layer(obj):
+            return obj.get('inkscape:groupmode') == 'layer'
 
         def show_parent_layers(layer, show=True):
             parent = layer
             while True:
                 parent = parent.getparent()
-                if parent.get('inkscape:groupmode') == 'layer':
+                if is_layer(parent):
                     show_layer(parent, show=show)
                 else:
                     break
@@ -51,22 +73,27 @@ class AnimLayers(TempDirMixin, inkex.OutputExtension):
         else:
             snapshot = inkscape_snapshot
 
-        # first, hide everything
-        for layer in layers:
-            show_layer(layer, show=False)
+        # filter frame and bg layers
+        frame_layers = []
 
-        # if first layer is named 'bg' then show it forever
-        if layers[0].get('inkscape:label') == 'bg':
-            show_layer(layers[0])
-            layers = layers[1:]
+        def filter_layers(layers, firstlev=False):
+            for layer in layers:
+                # hide everything except bg
+                show_layer(layer, show=False)
+                # select regular leaf layers or their first level objects
+                if label(layer) not in [*hidden_layer_names, *exposed_layer_names]:
+                    children = layer.getchildren()
+                    has_children_layers = any(is_layer(c) for c in children)
+                    if has_children_layers:
+                        continue
+                    elif firstlev:
+                        filter_layers(children)
+                    else:
+                        frame_layers.append(layer)
 
-        i = 0
-        for layer in layers:
-            # do not generate an image for layers that have sublayers
-            children = layer.getchildren()
-            if children and children[0].get('inkscape:groupmode') == 'layer':
-                continue
+        filter_layers(layers, self.options.firstlev)
 
+        for i,layer in enumerate(frame_layers):
             show_parent_layers(layer)
             show_layer(layer)
             snapshot(self.document, dirname=self.tempdir, name=f'{i:04}',
@@ -75,12 +102,10 @@ class AnimLayers(TempDirMixin, inkex.OutputExtension):
             show_parent_layers(layer, show=False)
 
             # copy PNG file if the option enabled
-            if self.options.pngs and self.options.path:
+            if self.options.pngs:
                 f = os.path.join(self.tempdir, f'{i:04}.png')
                 t = os.path.join(self.options.path, f'{i+self.options.pngn:04}.png')
                 shutil.copyfile(f, t)
-
-            i += 1
 
         # convert to mp4
         fps   = self.options.fps
@@ -103,9 +128,6 @@ class AnimLayers(TempDirMixin, inkex.OutputExtension):
         # save output
         with open(mp4, 'rb') as tmp4:
             shutil.copyfileobj(tmp4, stream)
-
-        if self.options.pngs and not self.options.path:
-            inkex.errormsg("PNG frames were not saved. Please, choose a path.")
 
         if self.options.ffplay:
             sp.run(f'ffplay -loglevel quiet -loop 0 {mp4}'.split())

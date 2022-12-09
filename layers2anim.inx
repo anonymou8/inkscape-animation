@@ -3,23 +3,24 @@
   <name>Export layers as animation frames</name>
   <id>org.inkscape.output.anim_layers</id>
   <dependency type="extension">org.inkscape.output.svg.inkscape</dependency>
-  
+
     <param name="resolution" type="int" min="1" max="1000" gui-text="Resolution:">96</param>
-    <param name="fps" type="int" min="1" max="1000" gui-text="FPS:">12</param>
+    <param name="fps" type="int" min="1" max="1000" gui-text="Framerate:">12</param>
     <param name="loops" type="int" min="1" max="1000" gui-text="Loops:">1</param>
-    <param name="crf" type="int" min="0" max="51" gui-text="h264 CRF (0=lossless):">22</param>
+    <param name="crf" type="int" min="0" max="51" gui-text="h264 CRF (quality, 0=lossless):">22</param>
+    <param name="opac" type="bool" gui-text=" Set layer opacity to 100%">true</param>
+    <param name="firstlev" type="bool" gui-text=" Treat first level objects as frames">false</param>
     <param name="rgb" type="bool" gui-text=" Use RGB codec variant">true</param>
     <param name="rsvg" type="bool" gui-text=" Use `rsvg-convert` as renderer (faster)">true</param>
     <separator/>
     <spacer/>
-    <param name="pngs" type="bool" gui-text=" Save each frame as separate PNG image:">false</param>
-    <label>Warning: files will be rewritten if exist!</label>
-    <param name="path" type="path" mode="folder" gui-text="Folder to save images to:"/>
-    <param name="pngn" type="int" min="0" max="9999" gui-text="First image number:">0</param>
+    <param name="pngs" type="bool" gui-text=" Save each frame as separate PNG image (with overwrite):">false</param>
+    <param name="path" type="path" mode="folder" gui-text=" Folder to save images to:"/>
+    <param name="pngn" type="int" min="0" max="9999" gui-text=" First image number:">0</param>
     <separator/>
     <spacer/>
     <param name="ffplay" type="bool" gui-text=" Play looped animation after export (ffplay)">false</param>
-    
+
   <output>
     <extension>.mp4</extension>
     <mimetype>video/mp4</mimetype>
@@ -27,10 +28,10 @@
     <filetypetooltip>Export layers as animation frames</filetypetooltip>
     <dataloss>true</dataloss>
   </output>
-  
+
   <script>
     <command location="inx" interpreter="python">layers2anim.py</command>
     <helper_extension>org.inkscape.output.svg.inkscape</helper_extension>
   </script>
-  
+
 </inkscape-extension>
