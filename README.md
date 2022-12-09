@@ -29,11 +29,11 @@ then the option will set opacity of each layer to 100% during export.
 
 `Treat first level objects as frames` option tells the extension to make frames from
 objects themselves and not layers. Only direct children of a layer can be frames. This
-is useful for quick animations on a single layer. E.g. you can interpolate subpaths with
-LPE, convert it regular path, then break it apart and use the extension without dealing
-with layers.
+is useful for [quick animations](https://raw.githubusercontent.com/anonymou8/inkscape-animation/main/quick.gif) 
+on a single layer. E.g. you can interpolate subpaths with LPE, convert it regular path, 
+then break it apart and use the extension without dealing with layers.
 
-<img src="https://raw.githubusercontent.com/anonymou8/inkscape-animation/main/quick.gif" />
+<!-- <img src="https://raw.githubusercontent.com/anonymou8/inkscape-animation/main/quick.gif" /> -->
 
 There is an option that allows to save each frame in PNG format to a specified directory. Files will
 be named in four-digit format, like `0000.png`, `0001.png` e.t.c. User can change first image number.
