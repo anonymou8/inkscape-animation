@@ -94,6 +94,10 @@ class AnimLayers(TempDirMixin, inkex.OutputExtension):
 
         filter_layers(layers, self.options.firstlev)
 
+        if len(frame_layers) < 1:
+            inkex.errormsg("Nothing to do.")
+            return
+
         for i,layer in enumerate(frame_layers):
             show_parent_layers(layer)
             show_layer(layer)
@@ -115,7 +119,7 @@ class AnimLayers(TempDirMixin, inkex.OutputExtension):
         pngs  = os.path.join(self.tempdir, '%04d.png')
         mp4   = os.path.join(self.tempdir, 'temp.mp4')
         loglevel  = '-hide_banner -loglevel warning'
-        vf_loops  = f'loop={self.options.loops-1}:{i}'
+        vf_loops  = f'loop={self.options.loops-1}:{len(frame_layers)}'
         args = f'''
             ffmpeg
                 {loglevel}
