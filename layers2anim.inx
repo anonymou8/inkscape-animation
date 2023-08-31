@@ -4,34 +4,123 @@
   <id>org.inkscape.output.anim_layers</id>
   <dependency type="extension">org.inkscape.output.svg.inkscape</dependency>
 
-    <param name="resolution" type="int" min="1" max="1000" gui-text="Resolution:">96</param>
-    <param name="fps" type="int" min="1" max="1000" gui-text="Framerate:">12</param>
-    <param name="loops" type="int" min="1" max="1000" gui-text="Loops:">1</param>
-    <param name="crf" type="int" min="0" max="51" gui-text="h264 CRF (quality, 0=lossless):">22</param>
-    <param name="opac" type="bool" gui-text=" Set layer opacity to 100%">true</param>
-    <param name="firstlev" type="bool" gui-text=" Treat first level objects as frames">false</param>
-    <param name="rgb" type="bool" gui-text=" Use RGB codec variant">true</param>
-    <param name="rsvg" type="bool" gui-text=" Use `rsvg-convert` as renderer (faster)">true</param>
-    <separator/>
-    <spacer/>
-    <param name="pngs" type="bool" gui-text=" Save each frame as separate PNG image (with overwrite):">false</param>
-    <param name="path" type="path" mode="folder" gui-text=" Folder to save images to:"/>
-    <param name="pngn" type="int" min="0" max="9999" gui-text=" First image number:">0</param>
-    <separator/>
-    <spacer/>
-    <param name="ffplay" type="bool" gui-text=" Play looped animation after export (ffplay)">false</param>
+    <param name="tab" type="notebook">
+    
+      <page name="output" gui-text="Output">
+      
+        <param name="firstlev" type="bool" gui-text=" Treat first level objects as layers"
+            gui-description="Each object will be rendered to a separate frame.
+ Clones only supported if the original is outside the page and labeled with one of the always exposed names">false</param>
+        
+        <spacer size="5"/>
+        <separator/>
+        <spacer size="5"/>
+        
+        <param name="scale" type="float" precision="2" min="0.01" max="10000" gui-text=" Frame scale, %:"
+            gui-description="Video dimensions in percents of the page size; 1 inch = 96 pixels">100</param>
+        <param name="fps" type="float" precision="2" min="0.0002" max="1000" gui-text=" Framerate, fps:"
+            gui-description="Animation speed, frames per second">12</param>
+        <param name="loops" type="int" min="1" max="1000" gui-text=" Loops:"
+            gui-description="How many times to repeat frames sequence (except APNG and GIF formats)">1</param>
+        <param name="backandforth" type="bool" gui-text=" Back and forth"
+            gui-description="Create a back an forth animation by adding reversed frame sequence to original">false</param>
 
-  <output>
-    <extension>.mp4</extension>
-    <mimetype>video/mp4</mimetype>
-    <filetypename>Layers as animation frames (ffmpeg) (*.mp4)</filetypename>
-    <filetypetooltip>Export layers as animation frames</filetypetooltip>
-    <dataloss>true</dataloss>
-  </output>
+        <spacer size="5"/>
+        <separator/>
+        <spacer size="5"/>
+
+        <param name="opac" type="bool" gui-text=" Set layers opacity to 100%"
+            gui-description="On rendering a frame layer opacity will be forced to 100%">true</param>
+        <param name="tran" type="bool" gui-text=" Page transparency"
+            gui-description="Set page to be transparent instead of page color, only for formats with alpha">false</param>
+        <param name="rsvg" type="bool" gui-text=" Use `rsvg-convert` as renderer (faster)"
+            gui-description="`rsvg-convert` is a command line tool from Librsvg to convert SVG files
+ to other formats, while it is faster than Inkscape it supports different subset
+ of the SVG specification and the render may look different for some documents">true</param>
+        
+        <spacer size="5"/>
+        <separator/>
+        <spacer size="5"/>
+
+        <param name="codec" type="optiongroup" appearance="combo" gui-text=" Codec:"
+            gui-description="Video codec variant. (A)PNG, WebM and yuv420 MP4 variant are browser compatible">
+          <option value="mp4">MP4 (.mp4, H.264, yuv444)</option>
+          <option value="mp4_rgb">MP4, RGB variant (.mp4, H.264, rgb)</option>
+          <option value="mp4_420">MP4, browser compatible (.mp4, H.264, yuv420)</option>
+          
+          <option value="webm">WebM (.webm, VP9, yuv444)</option>
+          <option value="webm_rgb">WebM, RGB variant (.webm, VP9, rgb)</option>
+          <option value="webm_420">WebM, transparent (.webm, VP9, yuva420, with alpha)</option>
+          
+          <option value="prores">ProRes 4444 (.mov, yuva4444, with alpha)</option>
+          <option value="png">PNG sequence (.png, rgba, lossless, with alpha)</option>
+          <option value="apng">APNG looped animation (.png, rgba, 8 bit, lossless, with alpha)</option>
+          <option value="gif">GIF looped animation (.gif, 256 colors, with 1 bit alpha)</option>
+        </param>
+        <param name="crf" type="int" min="0" max="63" gui-text=" MP4 / WebM quality, CRF (MP4: 0-51, WebM: 0-63):"
+            gui-description="Lower CRF means better quality. Good quality values: 23 (MP4) and 32 (WebM)
+ For MP4, CRF=0 produces lossless output.">23</param>
+        
+        <spacer size="5"/>
+        <separator/>
+        <spacer size="5"/>
+        
+        <param name="path" type="path" mode="file_new" gui-text=" Output filename:"
+            gui-description="Animation will be saved to the file (or folder, in case of PNG sequence) specified"/>
+        <label indent="2">Warning: if a file with the same name exists it will be overwritten.</label>
+        <label indent="2">A file extension will be added if not provided.</label>
+        <label indent="2">For PNG sequence, a folder will be created if doesn't exist.</label>
+        
+        <param name="pngn" type="int" min="0" max="8999" gui-text=" PNG sequence first image number:"
+            gui-description="Each frame will be named using four-digit format: 0000.png, 0001.png, 0002.png, e.t.c.
+ This parameter sets the initial number; default=0">0</param>
+        
+        <spacer size="5"/>
+        <separator/>
+        <spacer size="5"/>
+        
+        <param name="ffplay" type="bool" gui-text=" Play looped animation after export (ffplay)"
+            gui-description="`ffplay` is a utility from Ffmpeg that can play many video formats">false</param>
+            
+      </page>
+      
+      <page name="info" gui-text="Info">
+        <spacer size="5"/>
+        <label appearance="header">Convert SVG document layers to animation, version 2</label>
+        <spacer size="5"/>
+        <separator/>
+        <spacer size="5"/>
+        <label>Hover mouse cursor over a widget at the "Output" tab to get more info.</label>
+        <spacer size="5"/>
+        <separator/>
+        <spacer size="5"/>
+        <label>Each layer in a document represents a single frame.</label>
+        <label>Bottom layer is the first frame.</label>
+        <label>Always exposed layer names: "bg", "fg", "background", "foreground".</label>
+        <label>Always hidden layer names: "hide", "hidden", "off", "guides".</label>
+        <label>Layer visibility can also be changed by adding any of the keywords </label>
+        <label>in square brackets to layer's name, for example:</label>
+        <label indent="2">"Layer 1 [bg]", "Scene 2 [off]"</label>
+        <spacer size="5"/>
+        <separator/>
+        <spacer size="5"/>
+        <label>Extension page:</label>
+        <spacer size="5"/>
+        <label indent="2" appearance="url">https://github.com/anonymou8/inkscape-animation</label>
+      </page>
+      
+    </param> <!-- notebook -->
+      
+
+  <effect needs-live-preview="false">
+    <object-type>all</object-type>
+    <effects-menu>
+      <submenu name="Export"/>
+    </effects-menu>
+  </effect>
 
   <script>
     <command location="inx" interpreter="python">layers2anim.py</command>
-    <helper_extension>org.inkscape.output.svg.inkscape</helper_extension>
   </script>
 
 </inkscape-extension>
