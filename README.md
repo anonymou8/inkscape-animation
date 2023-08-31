@@ -20,7 +20,7 @@ Output formats are MP4, WebM, ProRes, GIF, APNG or just PNG image sequence.
 To use the extension, install it (see instruction below), restart Inkscape and navigate
 to `Extensions → Export → Export layers as animation frames...`
 
-<img src="https://raw.githubusercontent.com/anonymou8/inkscape-animation/main/screenshot.png" />
+<img src="https://raw.githubusercontent.com/anonymou8/inkscape-animation/main/screenshot2.png" />
 <!-- ![screenshot](screenshot.png) -->
 
 Each layer in a document represents a single frame. Bottom layer is the first frame.
